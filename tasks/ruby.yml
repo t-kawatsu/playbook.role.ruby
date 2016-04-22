@@ -1,0 +1,88 @@
+---
+- name: checkout rbenv from {{ rbenv.repo }}
+  git: repo={{ rbenv.repo }}
+       dest={{ rbenv.root }}
+       version={{ rbenv.version }}
+       accept_hostkey=yes
+       force=yes
+
+- name: create plugins directory of rbenv
+  file: state=directory path={{ rbenv.root }}/plugins
+
+- name: create shims directory of rbenv
+  file: state=directory path={{ rbenv.root }}/shims
+
+- name: install rbenv plugins
+  git: >
+    repo={{ item.repo }}
+    dest={{ rbenv.root }}/plugins/{{ item.name }}
+    version={{ item.version }}
+    accept_hostkey=true
+    force=yes
+  with_items: rbenv_plugins
+
+- name: add rbenv initialization to profile system-wide
+  copy: src=etc/profile.d/rbenv.sh
+        dest=/etc/profile.d/rbenv.sh
+        owner=root group=root mode=0755
+
+- name: change sudoers file
+  lineinfile: dest=/etc/sudoers
+              state=present
+              backup=yes
+              insertafter='^# Defaults(.*)env_keep(.*)\+\='
+              line='Defaults env_keep += "PATH"'
+
+- name: install libraries for ruby
+  yum: state=present name={{ item }}
+  with_items:
+    - gcc
+    - zlib
+    - zlib-devel
+    - openssl
+    - openssl-devel
+    - readline-devel
+#    - libiconv
+    - libffi-devel
+    - libyaml-devel
+
+- name: check ruby {{ rbenv.ruby_version }} installed for system
+  shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
+  register: ruby_installed
+  changed_when: false
+  ignore_errors: yes
+  always_run: yes
+
+- name: install ruby {{ rbenv.ruby_version }} for system
+  shell: bash -lc "rbenv install {{ rbenv.ruby_version }}"
+  when:
+    - ruby_installed.rc != 0
+
+- name: check if current system ruby version is {{ rbenv.ruby_version }}
+  shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
+  register: ruby_selected
+  changed_when: false
+  ignore_errors: yes
+  always_run: yes
+
+- name: set ruby {{ rbenv.ruby_version }} for system
+  shell: bash -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
+  when:
+    - ruby_selected.rc != 0
+
+- name: install bundler
+  shell: bash -lc "rbenv exec gem install bundler && rbenv rehash"
+  when:
+    - ruby_selected.rc != 0
+
+- name: check if {{ rbenv.group }} group is exists
+  group: name={{ rbenv.group }} state=present gid={{ rbenv.gid }}
+
+- name: change ownership, group and mode of rbenv
+  file: path={{ rbenv.root }}
+        owner=root
+        group={{ rbenv.group }}
+        mode="u=rwx,g=rwx,o=rx"
+        recurse=yes
+  when:
+    - ruby_selected.rc != 0
