@@ -1,35 +1,40 @@
 ---
-- name: install git
+- name: gitのインストール
   yum: state=present name={{ item }}
   with_items:
     - git
+  become: yes
 
-- name: checkout rbenv from {{ rbenv.repo }}
+- name: "rbenvリポジトリのチェックアウト {{ rbenv.repo }}"
   git: repo={{ rbenv.repo }}
        dest={{ rbenv.root }}
        version={{ rbenv.version }}
        accept_hostkey=yes
        force=yes
+  become: yes
 
-- name: create plugins directory of rbenv
+- name: "rbenv用プラグインディレクトリの作成 {{ rbenv.root }}/plugins"
   file: state=directory path={{ rbenv.root }}/plugins
+  become: yes
 
-- name: create shims directory of rbenv
+- name: "rbenv用shimsディレクトリの作成 {{ rbenv.root }}/shims"
   file: state=directory path={{ rbenv.root }}/shims
+  become: yes
 
-- name: install rbenv plugins
-  git: >
-    repo={{ item.repo }}
-    dest={{ rbenv.root }}/plugins/{{ item.name }}
-    version={{ item.version }}
-    accept_hostkey=true
-    force=yes
-  with_items: rbenv_plugins
+- name: "rbenvプラグインのインストール"
+  git: repo={{ item.repo }}
+       dest={{ rbenv.root }}/plugins/{{ item.name }}
+       version={{ item.version }}
+       accept_hostkey=yes
+       force=yes
+  with_items: "{{ rbenv_plugins }}"
+  become: yes
 
 - name: add rbenv initialization to profile system-wide
   copy: src=etc/profile.d/rbenv.sh
         dest=/etc/profile.d/rbenv.sh
         owner=root group=root mode=0755
+  become: yes
 
 - name: change sudoers file
   lineinfile: dest=/etc/sudoers
@@ -37,8 +42,9 @@
               backup=yes
               insertafter='^# Defaults(.*)env_keep(.*)\+\='
               line='Defaults env_keep += "PATH"'
+  become: yes
 
-- name: install libraries for ruby
+- name: rubyインストール用ライブラリインストール
   yum: state=present name={{ item }}
   with_items:
     - gcc
@@ -50,40 +56,47 @@
 #    - libiconv
     - libffi-devel
     - libyaml-devel
+  become: yes
 
-- name: check ruby {{ rbenv.ruby_version }} installed for system
+- name: "ruby {{ rbenv.ruby_version }} がインストール済みかどうか確認"
   shell: $SHELL -lc "rbenv versions | grep {{ rbenv.ruby_version }}"
   register: ruby_installed
   changed_when: false
   ignore_errors: yes
   always_run: yes
+  become: yes
 
-- name: install ruby {{ rbenv.ruby_version }} for system
+- name: "ruby {{ rbenv.ruby_version }} インストール"
   shell: bash -lc "rbenv install {{ rbenv.ruby_version }}"
   when:
     - ruby_installed.rc != 0
+  become: yes
 
-- name: check if current system ruby version is {{ rbenv.ruby_version }}
+- name: "現在のrubyのバージョンが {{ rbenv.ruby_version }} かどうか確認"
   shell: $SHELL -lc "rbenv version | cut -d ' ' -f 1 | grep -Fx '{{ rbenv.ruby_version }}'"
   register: ruby_selected
   changed_when: false
   ignore_errors: yes
   always_run: yes
+  become: yes
 
-- name: set ruby {{ rbenv.ruby_version }} for system
+- name: "rubyのバージョンを {{ rbenv.ruby_version }} に設定"
   shell: bash -lc "rbenv global {{ rbenv.ruby_version }} && rbenv rehash"
   when:
     - ruby_selected.rc != 0
+  become: yes
 
-- name: install bundler
+- name: bundlerインストール
   shell: bash -lc "rbenv exec gem install bundler && rbenv rehash"
   when:
     - ruby_selected.rc != 0
+  become: yes
 
-- name: check if {{ rbenv.group }} group is exists
+- name: "{{ rbenv.group }} グループが存在するか確認"
   group: name={{ rbenv.group }} state=present gid={{ rbenv.gid }}
+  become: yes
 
-- name: change ownership, group and mode of rbenv
+- name: "rbenvディレクトリのグループ、モードを変更"
   file: path={{ rbenv.root }}
         owner=root
         group={{ rbenv.group }}
@@ -91,3 +104,5 @@
         recurse=yes
   when:
     - ruby_selected.rc != 0
+  become: yes
+

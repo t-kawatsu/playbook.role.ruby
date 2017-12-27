@@ -2,7 +2,7 @@
 rbenv:
   env: "system"
   version: "HEAD"
-  ruby_version: "2.3.0"
+  ruby_version: "2.5.0"
   group: develop
   gid: 510
   repo: "git://github.com/sstephenson/rbenv.git"
