@@ -44,7 +44,7 @@
               line='Defaults env_keep += "PATH"'
   become: yes
 
-- name: rubyインストール用ライブラリインストール
+- name: ruby 用ライブラリインストール
   yum: state=present name={{ item }}
   with_items:
     - gcc
@@ -67,7 +67,7 @@
   become: yes
 
 - name: "ruby {{ rbenv.ruby_version }} インストール"
-  shell: bash -lc "rbenv install {{ rbenv.ruby_version }}"
+  shell: bash -lc "CONFIGURE_OPTS='--disable-install-rdoc' rbenv install {{ rbenv.ruby_version }}"
   when:
     - ruby_installed.rc != 0
   become: yes

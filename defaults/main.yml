@@ -13,11 +13,11 @@ rbenv_plugins:
   - { name: "rbenv-gem-rehash",   repo: "https://github.com/sstephenson/rbenv-gem-rehash.git",   version: "HEAD" }
   - { name: "rbenv-vars",         repo: "https://github.com/sstephenson/rbenv-vars.git",         version: "HEAD" }
   - { name: "ruby-build",         repo: "https://github.com/rbenv/ruby-build.git",               version: "HEAD" }
-  - { name: "rbenv-default-gems", repo: "https://github.com/sstephenson/rbenv-default-gems.git", version: "HEAD" }
-  - { name: "rbenv-installer",    repo: "https://github.com/fesplugas/rbenv-installer.git",      version: "HEAD" }
-  - { name: "rbenv-update",       repo: "https://github.com/rkh/rbenv-update.git",               version: "HEAD" }
-  - { name: "rbenv-whatis",       repo: "https://github.com/rkh/rbenv-whatis.git",               version: "HEAD" }
-  - { name: "rbenv-use",          repo: "https://github.com/rkh/rbenv-use.git",                  version: "HEAD" }
+#  - { name: "rbenv-default-gems", repo: "https://github.com/sstephenson/rbenv-default-gems.git", version: "HEAD" }
+#  - { name: "rbenv-installer",    repo: "https://github.com/fesplugas/rbenv-installer.git",      version: "HEAD" }
+#  - { name: "rbenv-update",       repo: "https://github.com/rkh/rbenv-update.git",               version: "HEAD" }
+#  - { name: "rbenv-whatis",       repo: "https://github.com/rkh/rbenv-whatis.git",               version: "HEAD" }
+#  - { name: "rbenv-use",          repo: "https://github.com/rkh/rbenv-use.git",                  version: "HEAD" }
 
 epel_repo:
   url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
